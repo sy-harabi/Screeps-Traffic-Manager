@@ -21,10 +21,34 @@ To use the traffic manager in your Screeps code, follow these steps:
    trafficManager.init()
    ```
    
-   At the end of your loop code, for every room in Game.rooms, call the traffic manager's run method:
+2. **Run Traffic Manager:**
+   At the end of your loop code, for every room that you have creeps in, call the traffic manager's run method:
    ```javascript
    for (const roomName in Game.rooms) {
        const room = Game.rooms[roomName];
        trafficManager.run(room);
    }
    ```
+   Note: It is essential to call trafficManager.run(room) not only for your own rooms but for every room where your creeps are present. This ensures that the traffic management is applied consistently across all areas where your creeps operate.
+
+3. **Example**
+   Here's an example of how to integrate the traffic manager with your Screeps main script:
+   ```javascript
+   // main.js
+   const trafficManager = require('trafficManager');
+   
+   // Initialize the traffic manager
+   trafficManager.init();
+   
+   module.exports.loop = function () {
+       // Your existing game logic here
+   
+       // Run the traffic manager for each room
+       for (const roomName in Game.rooms) {
+           const room = Game.rooms[roomName];
+           trafficManager.run(room);
+       }
+   };
+   ```
+   4. **Contributing**
+      Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
