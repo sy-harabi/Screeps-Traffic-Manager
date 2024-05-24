@@ -1,152 +1,142 @@
-let matching;
-let visited;
+let movementMap;
+let visitedCreeps;
 
 const trafficManager = {
   init() {
-    if (!Creep.prototype._move) {
-      Creep.prototype._move = Creep.prototype.move;
-    }
-
-    Creep.prototype.move = function (target) {
-      let intendedCoord;
+    Creep.prototype.registerMove = function (target) {
+      let targetPosition;
 
       if (Number.isInteger(target)) {
-        const coordDelta = delta[target];
-        intendedCoord = {
-          x: Math.max(0, Math.min(49, this.pos.x + coordDelta.x)),
-          y: Math.max(0, Math.min(49, this.pos.y + coordDelta.y)),
+        const deltaCoords = directionDelta[target];
+        targetPosition = {
+          x: Math.max(0, Math.min(49, this.pos.x + deltaCoords.x)),
+          y: Math.max(0, Math.min(49, this.pos.y + deltaCoords.y)),
         };
       } else {
-        intendedCoord = target;
+        targetPosition = target;
       }
 
-      const packed = packCoord(intendedCoord);
-
-      this._intendedPacked = packed;
+      const packedCoord = packCoordinates(targetPosition);
+      this._intendedPackedCoord = packedCoord;
     };
   },
 
   run(room) {
-    matching = new Map();
+    movementMap = new Map();
+    const creepsInRoom = room.find(FIND_MY_CREEPS);
+    const creepsWithMovementIntent = [];
 
-    const creeps = room.find(FIND_MY_CREEPS);
-
-    const creepsWithMoveIntent = [];
-
-    for (const creep of creeps) {
-      match(creep, creep.pos);
-      if (creep._intendedPacked) {
-        creepsWithMoveIntent.push(creep);
+    for (const creep of creepsInRoom) {
+      assignCreepToCoordinate(creep, creep.pos);
+      if (creep._intendedPackedCoord) {
+        creepsWithMovementIntent.push(creep);
       }
     }
 
-    for (const creep of creepsWithMoveIntent) {
-      if (creep._matchedPacked === creep._intendedPacked) {
+    for (const creep of creepsWithMovementIntent) {
+      if (creep._matchedPackedCoord === creep._intendedPackedCoord) {
         continue;
       }
 
-      visited = {};
+      visitedCreeps = {};
 
-      matching.delete(creep._matchedPacked);
+      movementMap.delete(creep._matchedPackedCoord);
+      creep._matchedPackedCoord = undefined;
 
-      creep._matchedPacked = undefined;
-
-      if (dfs(creep) > 0 > 0) {
+      if (depthFirstSearch(creep) > 0) {
         continue;
       }
 
-      match(creep, creep.pos);
+      assignCreepToCoordinate(creep, creep.pos);
     }
 
-    for (const creep of creeps) {
-      const matchedCoord = unpackCoord(creep._matchedPacked);
+    for (const creep of creepsInRoom) {
+      const matchedPosition = unpackCoordinates(creep._matchedPackedCoord);
 
-      if (creep.pos.isEqualTo(matchedCoord.x, matchedCoord.y)) {
+      if (creep.pos.isEqualTo(matchedPosition.x, matchedPosition.y)) {
         continue;
       }
 
       const direction = creep.pos.getDirectionTo(
-        matchedCoord.x,
-        matchedCoord.y
+        matchedPosition.x,
+        matchedPosition.y
       );
-
-      creep._move(direction);
+      creep.move(direction);
     }
   },
 };
 
-function getMoveCandidates(creep) {
-  if (creep._moveCandidates) {
-    return creep._moveCandidates;
+function getPossibleMoves(creep) {
+  if (creep._cachedMoveOptions) {
+    return creep._cachedMoveOptions;
   }
 
-  const result = [creep.pos];
+  const possibleMoves = [creep.pos];
 
   if (creep.fatigue > 0) {
-    return result;
+    return possibleMoves;
   }
 
-  creep._moveCandidates = result;
+  creep._cachedMoveOptions = possibleMoves;
 
-  if (creep._intendedPacked) {
-    result.unshift(unpackCoord(creep._intendedPacked));
-    return result;
+  if (creep._intendedPackedCoord) {
+    possibleMoves.unshift(unpackCoordinates(creep._intendedPackedCoord));
+    return possibleMoves;
   }
 
-  const adjacents = Object.values(delta).map((obj) => {
-    return { x: creep.pos.x + obj.x, y: creep.pos.y + obj.y };
+  const adjacentPositions = Object.values(directionDelta).map((delta) => {
+    return { x: creep.pos.x + delta.x, y: creep.pos.y + delta.y };
   });
 
-  const terrain = Game.map.getRoomTerrain(creep.room.name);
+  const roomTerrain = Game.map.getRoomTerrain(creep.room.name);
 
-  for (const adjacent of adjacents) {
-    if (terrain.get(adjacent.x, adjacent.y) === TERRAIN_MASK_WALL) {
+  for (const adjacentPos of adjacentPositions) {
+    if (roomTerrain.get(adjacentPos.x, adjacentPos.y) === TERRAIN_MASK_WALL) {
       continue;
     }
     if (
-      adjacent.x === 0 ||
-      adjacent.x === 49 ||
-      adjacent.y === 0 ||
-      adjacent.y === 49
+      adjacentPos.x === 0 ||
+      adjacentPos.x === 49 ||
+      adjacentPos.y === 0 ||
+      adjacentPos.y === 49
     ) {
       continue;
     }
-    result.push(adjacent);
+    possibleMoves.push(adjacentPos);
   }
 
-  return result;
+  return possibleMoves;
 }
 
-function dfs(creep, score = 0) {
-  visited[creep.name] = true;
+function depthFirstSearch(creep, currentScore = 0) {
+  visitedCreeps[creep.name] = true;
 
-  for (const coord of getMoveCandidates(creep)) {
-    let currentScore = score;
+  for (const coord of getPossibleMoves(creep)) {
+    let score = currentScore;
+    const packedCoord = packCoordinates(coord);
 
-    const packed = packCoord(coord);
-
-    if (creep._intendedPacked === packed) {
-      currentScore++;
+    if (creep._intendedPackedCoord === packedCoord) {
+      score++;
     }
 
-    const occupyingCreep = matching.get(packed);
+    const occupyingCreep = movementMap.get(packedCoord);
 
     if (!occupyingCreep) {
-      if (currentScore > 0) {
-        match(creep, coord);
+      if (score > 0) {
+        assignCreepToCoordinate(creep, coord);
       }
-      return currentScore;
+      return score;
     }
 
-    if (!visited[occupyingCreep.name]) {
-      if (occupyingCreep._intendedPacked === packed) {
-        currentScore--;
+    if (!visitedCreeps[occupyingCreep.name]) {
+      if (occupyingCreep._intendedPackedCoord === packedCoord) {
+        score--;
       }
 
-      const result = dfs(occupyingCreep, currentScore);
+      const result = depthFirstSearch(occupyingCreep, score);
 
       if (result > 0) {
-        match(creep, coord);
+        assignCreepToCoordinate(creep, coord);
         return result;
       }
     }
@@ -155,7 +145,7 @@ function dfs(creep, score = 0) {
   return -Infinity;
 }
 
-const delta = {
+const directionDelta = {
   [TOP]: { x: 0, y: -1 },
   [TOP_RIGHT]: { x: 1, y: -1 },
   [RIGHT]: { x: 1, y: 0 },
@@ -166,20 +156,19 @@ const delta = {
   [TOP_LEFT]: { x: -1, y: -1 },
 };
 
-function match(creep, coord) {
-  const packed = packCoord(coord);
-
-  creep._matchedPacked = packed;
-  matching.set(packed, creep);
+function assignCreepToCoordinate(creep, coord) {
+  const packedCoord = packCoordinates(coord);
+  creep._matchedPackedCoord = packedCoord;
+  movementMap.set(packedCoord, creep);
 }
 
-function packCoord(coord) {
+function packCoordinates(coord) {
   return 50 * coord.y + coord.x;
 }
 
-function unpackCoord(packed) {
-  const x = packed % 50;
-  const y = (packed - x) / 50;
+function unpackCoordinates(packedCoord) {
+  const x = packedCoord % 50;
+  const y = (packedCoord - x) / 50;
   return { x, y };
 }
 
