@@ -73,11 +73,11 @@ function getPossibleMoves(creep) {
 
   const possibleMoves = [creep.pos];
 
+  creep._cachedMoveOptions = possibleMoves;
+
   if (creep.fatigue > 0) {
     return possibleMoves;
   }
-
-  creep._cachedMoveOptions = possibleMoves;
 
   if (creep._intendedPackedCoord) {
     possibleMoves.unshift(unpackCoordinates(creep._intendedPackedCoord));
@@ -105,7 +105,7 @@ function getPossibleMoves(creep) {
     possibleMoves.push(adjacentPos);
   }
 
-  return possibleMoves;
+  return _.shuffle(possibleMoves);
 }
 
 function depthFirstSearch(creep, currentScore = 0) {
