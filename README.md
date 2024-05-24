@@ -19,10 +19,12 @@ To use the traffic manager in your Screeps code, follow these steps:
    At the start of your main code (before calling the loop function), initialize the traffic manager:
    ```javascript
    trafficManager.init()
-
+   ```
+   
    At the end of your loop code, for every room in Game.rooms, call the traffic manager's run method:
    ```javascript
    for (const roomName in Game.rooms) {
        const room = Game.rooms[roomName];
        trafficManager.run(room);
    }
+   ```
