@@ -22,6 +22,7 @@ To use the traffic manager in your Screeps code, follow these steps:
    ```
    
 2. **Run Traffic Manager:**
+   Use Creep.registerMove(target) instead of Creep.move(). Target can be direction(1~8), roomPosition or simple coordinates {x,y}
    At the end of your loop code, for every room that you have creeps in, call the traffic manager's run method:
    ```javascript
    for (const roomName in Game.rooms) {
@@ -31,7 +32,7 @@ To use the traffic manager in your Screeps code, follow these steps:
    ```
    Note: It is essential to call trafficManager.run(room) not only for your own rooms but for every room where your creeps are present. This ensures that the traffic management is applied consistently across all areas where your creeps operate.
 
-3. **Example:**
+4. **Example:**
    Here's an example of how to integrate the traffic manager with your Screeps main script:
    ```javascript
    // main.js
@@ -51,5 +52,5 @@ To use the traffic manager in your Screeps code, follow these steps:
    }
    ```
    
-4. **Contributing:**
+5. **Contributing:**
    Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
