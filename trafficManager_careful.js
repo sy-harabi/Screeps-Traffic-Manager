@@ -1,9 +1,20 @@
 /**
- * This version does not ensure optimal solution but more cpu efficient
+ * This version ensures optimal solution and uses more cpu
  */
 
 let movementMap;
 let visitedCreeps;
+
+const directionDelta = {
+  [TOP]: { x: 0, y: -1 },
+  [TOP_RIGHT]: { x: 1, y: -1 },
+  [RIGHT]: { x: 1, y: 0 },
+  [BOTTOM_RIGHT]: { x: 1, y: 1 },
+  [BOTTOM]: { x: 0, y: 1 },
+  [BOTTOM_LEFT]: { x: -1, y: 1 },
+  [LEFT]: { x: -1, y: 0 },
+  [TOP_LEFT]: { x: -1, y: -1 },
+};
 
 const trafficManager = {
   init() {
@@ -37,21 +48,29 @@ const trafficManager = {
       }
     }
 
-    for (const creep of creepsWithMovementIntent) {
-      if (creep._matchedPackedCoord === creep._intendedPackedCoord) {
-        continue;
+    while (true) {
+      let found = false;
+      for (const creep of creepsWithMovementIntent) {
+        if (creep._matchedPackedCoord === creep._intendedPackedCoord) {
+          continue;
+        }
+
+        visitedCreeps = {};
+
+        movementMap.delete(creep._matchedPackedCoord);
+        creep._matchedPackedCoord = undefined;
+
+        if (depthFirstSearch(creep) > 0) {
+          found = true;
+          continue;
+        }
+
+        assignCreepToCoordinate(creep, creep.pos);
       }
 
-      visitedCreeps = {};
-
-      movementMap.delete(creep._matchedPackedCoord);
-      creep._matchedPackedCoord = undefined;
-
-      if (depthFirstSearch(creep) > 0) {
-        continue;
+      if (!found) {
+        break;
       }
-
-      assignCreepToCoordinate(creep, creep.pos);
     }
 
     for (const creep of creepsInRoom) {
@@ -69,6 +88,43 @@ const trafficManager = {
     }
   },
 };
+
+function depthFirstSearch(creep, currentScore = 0) {
+  visitedCreeps[creep.name] = true;
+
+  for (const coord of getPossibleMoves(creep)) {
+    let score = currentScore;
+    const packedCoord = packCoordinates(coord);
+
+    if (creep._intendedPackedCoord === packedCoord) {
+      score++;
+    }
+
+    const occupyingCreep = movementMap.get(packedCoord);
+
+    if (!occupyingCreep) {
+      if (score > 0) {
+        assignCreepToCoordinate(creep, coord);
+      }
+      return score;
+    }
+
+    if (!visitedCreeps[occupyingCreep.name]) {
+      if (occupyingCreep._intendedPackedCoord === packedCoord) {
+        score--;
+      }
+
+      const result = depthFirstSearch(occupyingCreep, score);
+
+      if (result > 0) {
+        assignCreepToCoordinate(creep, coord);
+        return result;
+      }
+    }
+  }
+
+  return -Infinity;
+}
 
 function getPossibleMoves(creep) {
   if (creep._cachedMoveOptions) {
@@ -111,54 +167,6 @@ function getPossibleMoves(creep) {
 
   return _.shuffle(possibleMoves);
 }
-
-function depthFirstSearch(creep, currentScore = 0) {
-  visitedCreeps[creep.name] = true;
-
-  for (const coord of getPossibleMoves(creep)) {
-    let score = currentScore;
-    const packedCoord = packCoordinates(coord);
-
-    if (creep._intendedPackedCoord === packedCoord) {
-      score++;
-    }
-
-    const occupyingCreep = movementMap.get(packedCoord);
-
-    if (!occupyingCreep) {
-      if (score > 0) {
-        assignCreepToCoordinate(creep, coord);
-      }
-      return score;
-    }
-
-    if (!visitedCreeps[occupyingCreep.name]) {
-      if (occupyingCreep._intendedPackedCoord === packedCoord) {
-        score--;
-      }
-
-      const result = depthFirstSearch(occupyingCreep, score);
-
-      if (result > 0) {
-        assignCreepToCoordinate(creep, coord);
-        return result;
-      }
-    }
-  }
-
-  return -Infinity;
-}
-
-const directionDelta = {
-  [TOP]: { x: 0, y: -1 },
-  [TOP_RIGHT]: { x: 1, y: -1 },
-  [RIGHT]: { x: 1, y: 0 },
-  [BOTTOM_RIGHT]: { x: 1, y: 1 },
-  [BOTTOM]: { x: 0, y: 1 },
-  [BOTTOM_LEFT]: { x: -1, y: 1 },
-  [LEFT]: { x: -1, y: 0 },
-  [TOP_LEFT]: { x: -1, y: -1 },
-};
 
 function assignCreepToCoordinate(creep, coord) {
   const packedCoord = packCoordinates(coord);
