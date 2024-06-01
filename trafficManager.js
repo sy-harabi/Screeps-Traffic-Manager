@@ -6,7 +6,7 @@ let movementMap;
 let visitedCreeps;
 
 const trafficManager = {
-  init() {
+  init(visual = false) {
     Creep.prototype.registerMove = function (target) {
       let targetPosition;
 
@@ -20,12 +20,21 @@ const trafficManager = {
         targetPosition = target;
       }
 
+      if (visual) {
+        new RoomVisual(this.room.name).arrow(this.pos, targetPosition);
+      }
+
       const packedCoord = packCoordinates(targetPosition);
       this._intendedPackedCoord = packedCoord;
     };
+
+    Creep.prototype.setWorkingArea = function (pos, range) {
+      this._workingPos = pos;
+      this._workingRange = range;
+    };
   },
 
-  run(room) {
+  run(room, costs, threshold) {
     movementMap = new Map();
     const creepsInRoom = room.find(FIND_MY_CREEPS);
     const creepsWithMovementIntent = [];
@@ -47,7 +56,7 @@ const trafficManager = {
       movementMap.delete(creep._matchedPackedCoord);
       creep._matchedPackedCoord = undefined;
 
-      if (depthFirstSearch(creep) > 0) {
+      if (depthFirstSearch(creep, 0, costs, threshold) > 0) {
         continue;
       }
 
@@ -70,7 +79,7 @@ const trafficManager = {
   },
 };
 
-function getPossibleMoves(creep) {
+function getPossibleMoves(creep, costs, threshold = 255) {
   if (creep._cachedMoveOptions) {
     return creep._cachedMoveOptions;
   }
@@ -88,34 +97,68 @@ function getPossibleMoves(creep) {
     return possibleMoves;
   }
 
-  const adjacentPositions = Object.values(directionDelta).map((delta) => {
+  const adjacentCoords = Object.values(directionDelta).map((delta) => {
     return { x: creep.pos.x + delta.x, y: creep.pos.y + delta.y };
   });
 
   const roomTerrain = Game.map.getRoomTerrain(creep.room.name);
 
-  for (const adjacentPos of adjacentPositions) {
-    if (roomTerrain.get(adjacentPos.x, adjacentPos.y) === TERRAIN_MASK_WALL) {
-      continue;
-    }
+  const outOfWorkingArea = [];
+
+  for (const adjacentCoord of _.shuffle(adjacentCoords)) {
     if (
-      adjacentPos.x === 0 ||
-      adjacentPos.x === 49 ||
-      adjacentPos.y === 0 ||
-      adjacentPos.y === 49
+      roomTerrain.get(adjacentCoord.x, adjacentCoord.y) === TERRAIN_MASK_WALL
     ) {
       continue;
     }
-    possibleMoves.push(adjacentPos);
+
+    if (
+      adjacentCoord.x === 0 ||
+      adjacentCoord.x === 49 ||
+      adjacentCoord.y === 0 ||
+      adjacentCoord.y === 49
+    ) {
+      continue;
+    }
+
+    if (costs && costs.get(adjacentCoord.x, adjacentCoord.y) >= threshold) {
+      continue;
+    }
+
+    if (
+      creep._workingPos &&
+      creep._workingPos.getRangeTo(adjacentCoord.x, adjacentCoord.y) >
+        creep._workingRange
+    ) {
+      outOfWorkingArea.push(adjacentCoord);
+      continue;
+    } else {
+      possibleMoves.push(adjacentCoord);
+    }
   }
 
-  return _.shuffle(possibleMoves);
+  return [..._.shuffle(possibleMoves), ..._.shuffle(outOfWorkingArea)];
 }
 
-function depthFirstSearch(creep, currentScore = 0) {
+function depthFirstSearch(creep, currentScore = 0, costs, threshold) {
   visitedCreeps[creep.name] = true;
 
-  for (const coord of getPossibleMoves(creep)) {
+  const possibleMoves = getPossibleMoves(creep, costs, threshold);
+
+  const emptyTiles = [];
+
+  const occupiedTiles = [];
+
+  for (const coord of possibleMoves) {
+    const packedCoord = packCoordinates(coord);
+    if (movementMap.get(packedCoord)) {
+      occupiedTiles.push(coord);
+    } else {
+      emptyTiles.push(coord);
+    }
+  }
+
+  for (const coord of possibleMoves) {
     let score = currentScore;
     const packedCoord = packCoordinates(coord);
 
@@ -137,7 +180,7 @@ function depthFirstSearch(creep, currentScore = 0) {
         score--;
       }
 
-      const result = depthFirstSearch(occupyingCreep, score);
+      const result = depthFirstSearch(occupyingCreep, score, costs, threshold);
 
       if (result > 0) {
         assignCreepToCoordinate(creep, coord);
