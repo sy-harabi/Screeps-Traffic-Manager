@@ -7,7 +7,6 @@ The Screeps Traffic Manager is a utility designed to manage and optimize the mov
 1. **Optimized Traffic Management:** Utilizes a modified Ford-Fulkerson method to manage creep traffic efficiently.
 2. **Maximized Movements:** Aims to maximize the number of intended movements, ensuring smoother operation of your creeps.
 3. **Easy Integration:** Simple to integrate with your existing Screeps codebase.
-4. **Not Fully Tested:** Note that this project is still in the testing phase and may cause unexpected issues.
 
 ## Installation
 To install the Screeps Traffic Manager, add the necessary files from this repository to your Screeps project.
@@ -32,6 +31,9 @@ To use the traffic manager in your Screeps code, follow these steps:
    ```
    Note: It is essential to call trafficManager.run(room) not only for your own rooms but for every room where your creeps are present. This ensures that the traffic management is applied consistently across all areas where your creeps operate.
 
+3. **Additional features:**
+   You can pass PathFinder.PathFinder.CostMatrix and threshold as parameter of run() method to block certain tiles.
+
 4. **Example:**
    Here's an example of how to integrate the traffic manager with your Screeps main script:
    ```javascript
@@ -52,5 +54,5 @@ To use the traffic manager in your Screeps code, follow these steps:
    }
    ```
    
-5. **Contributing:**
+6. **Contributing:**
    Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
