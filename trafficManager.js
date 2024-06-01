@@ -6,7 +6,7 @@ let movementMap;
 let visitedCreeps;
 
 const trafficManager = {
-  init(visual = false) {
+  init() {
     Creep.prototype.registerMove = function (target) {
       let targetPosition;
 
@@ -18,10 +18,6 @@ const trafficManager = {
         };
       } else {
         targetPosition = target;
-      }
-
-      if (visual) {
-        new RoomVisual(this.room.name).arrow(this.pos, targetPosition);
       }
 
       const packedCoord = packCoordinates(targetPosition);
