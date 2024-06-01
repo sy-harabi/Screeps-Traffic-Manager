@@ -32,7 +32,7 @@ To use the traffic manager in your Screeps code, follow these steps:
    Note: It is essential to call trafficManager.run(room) not only for your own rooms but for every room where your creeps are present. This ensures that the traffic management is applied consistently across all areas where your creeps operate.
 
 3. **Additional features:**
-   You can pass PathFinder.PathFinder.CostMatrix and threshold to block certain tiles.
+   You can pass PathFinder.PathFinder.CostMatrix and threshold as parameter of run() method to block certain tiles.
 
 4. **Example:**
    Here's an example of how to integrate the traffic manager with your Screeps main script:
