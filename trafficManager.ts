@@ -13,7 +13,6 @@ interface Coord {
 }
 declare global {
     interface Creep {
-        trueMove: CreepMoveReturnCode;
         registerMove: (target: DirectionConstant | RoomPosition | Coord) => void;
         _intendedPackedCoord?: number;
         _matchedPackedCoord?: number;
