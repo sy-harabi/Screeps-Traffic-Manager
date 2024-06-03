@@ -2,27 +2,8 @@
  * This version does not ensure optimal solution but more cpu efficient
  */
 
+import { Coord } from './types';
 
-/**
- * ts version written by Gadjung(https://github.com/Gadjung)
- */
-
-interface Coord {
-    x: number;
-    y: number;
-}
-declare global {
-    interface Creep {
-        registerMove: (target: DirectionConstant | RoomPosition | Coord) => void;
-        _intendedPackedCoord?: number;
-        _matchedPackedCoord?: number;
-        _cachedMoveOptions?: Coord[];
-
-        setWorkingArea: (target: RoomPosition, range: number) => void;
-        _workingPos: RoomPosition;
-        _workingRange: number;
-    }
-}
 let movementMap: Map<number, Creep>;
 let visitedCreeps: { [creepName: string]: boolean };
 
@@ -51,6 +32,10 @@ export const trafficManager = {
         Creep.prototype.setWorkingArea = function(pos: RoomPosition, range: number) {
             this._workingPos = pos;
             this._workingRange = range;
+        };
+
+        Creep.prototype.setAsObstacle = function(isObstacle: boolean) {
+            this._isObstacle = isObstacle;
         };
     },
 
@@ -112,6 +97,10 @@ function getPossibleMoves(creep: Creep, costs: CostMatrix | undefined, threshold
     creep._cachedMoveOptions = possibleMoves;
 
     if (creep.fatigue > 0) {
+        return possibleMoves;
+    }
+
+    if (creep._isObstacle) {
         return possibleMoves;
     }
 
