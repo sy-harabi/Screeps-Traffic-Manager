@@ -42,6 +42,7 @@ To use the traffic manager in your Screeps code, follow these steps:
    for (const creep of upgraders) {
       creep.setWorkingArea(controller.pos, 3)
    }
+   ```
 
    You can use Creep.isObstacle() method to make cetain creeps to not be pushed. (ts version only)
 5. **Example:**
