@@ -35,9 +35,7 @@ To use the traffic manager in your Screeps code, follow these steps:
 
    You can pass PathFinder.CostMatrix and threshold as parameter of run() method to block certain tiles.
 
-   You can use Creep.setWorkingArea() method to make creeps to keep range to the target.
-
-   for example, you can use setWorkingArea() to keep upgraders in range 3 to the controller like below.
+   You can use Creep.setWorkingArea() method to make creeps to keep range to the target. For example, you can use setWorkingArea() to keep upgraders in range 3 to the controller like below.
    ```javascript
    for (const creep of upgraders) {
       creep.setWorkingArea(controller.pos, 3)
