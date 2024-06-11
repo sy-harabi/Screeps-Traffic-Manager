@@ -34,7 +34,11 @@ To use the traffic manager in your Screeps code, follow these steps:
 3. **Additional features:**
    You can pass PathFinder.CostMatrix and threshold as parameter of run() method to block certain tiles.
 
-4. **Example:**
+   You can use Creep.setWorkingArea(pos,range) method to make creeps to keep range to the target.
+
+   You can use Creep.isObstacle() method to make cetain creeps to not be pushed. (ts version only)
+
+5. **Example:**
    Here's an example of how to integrate the traffic manager with your Screeps main script:
    ```javascript
    // main.js
