@@ -21,7 +21,7 @@ To use the traffic manager in your Screeps code, follow these steps:
    ```
    
 2. **Run Traffic Manager:**
-   Use Creep.registerMove(target) instead of Creep.move(direction). target can be direction(1~8), roomPosition or simple coordinates {x,y}
+   Use `Creep.registerMove(target)` instead of` Creep.move(direction)`. target can be direction(1~8), roomPosition or simple coordinates {x,y}
    At the end of your loop code, for every room that you have creeps in, call the traffic manager's run method:
    ```javascript
    for (const roomName in Game.rooms) {
@@ -33,16 +33,16 @@ To use the traffic manager in your Screeps code, follow these steps:
 
 3. **Additional features**
 
-   You can pass PathFinder.CostMatrix and threshold as parameter of run() method to block certain tiles.
+   You can pass `PathFinder.CostMatrix` and `threshold` as parameter of `run()` method to block certain tiles.
 
-   You can use Creep.setWorkingArea() method to make creeps to keep range to the target. For example, you can use setWorkingArea() to keep upgraders in range 3 to the controller like below.
+   You can use `Creep.setWorkingArea()` method to make creeps to keep range to the target. For example, you can use `Creep.setWorkingArea()` to keep upgraders in range 3 to the controller like below.
    ```javascript
    for (const creep of upgraders) {
       creep.setWorkingArea(controller.pos, 3)
    }
    ```
 
-   You can use Creep.isObstacle() method to make cetain creeps to not be pushed. (ts version only)
+   You can use `Creep.isObstacle()` method to make cetain creeps to not be pushed. (ts version only)
 5. **Example:**
    Here's an example of how to integrate the traffic manager with your Screeps main script:
    ```javascript
